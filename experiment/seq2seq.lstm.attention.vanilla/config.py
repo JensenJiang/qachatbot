@@ -7,6 +7,13 @@ class Config:
         self.minibatch_size = 32
         self.max_epoch = 500
         self.epoch_instances = 9600
+        self.keep_prob = 1.0
+
+        # GAN parameters
+        self.dis_learning_rate = 0.01
+        self.gen_learning_rate = 0.01
+        self.clip_min = -0.1
+        self.clip_max = 0.1
 
         # Dataset Location
         self.traindata_path = r'./data/bdwm_data_token.pkl'
