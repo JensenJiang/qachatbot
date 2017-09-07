@@ -16,9 +16,9 @@ def main():
 
     config = Config()
     provider = DataProvider(config)
+    model = Seq2SeqBasicModel(config, 'train')
 
     with tf.Session() as sess:
-        model = Seq2SeqBasicModel(config, 'train')
         helper = TrainHelper(sess)
         clock = helper.clock
         sess.run(tf.global_variables_initializer())

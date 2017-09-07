@@ -5,7 +5,8 @@ from collections import defaultdict
 import numpy as np
 
 import tensorflow as tf
-from tensorflow.python.summary.summary import FileWriter
+from tensorflow.python.summary.summary import SessionLog, Summary
+from tensorflow.python.summary.writer.writer import FileWriter
 
 
 class TrainClock:
@@ -31,7 +32,7 @@ class TrainHelper:
 
         # Training resources
         self.sess = sess
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=None)  # Save all the checkpoints.
         self.clock = TrainClock()
 
         # Initialization
@@ -119,3 +120,9 @@ class MinibatchDataset:
 class TensorBoardLogger:
     def __init__(self, path):
         self._writer = FileWriter(path, flush_secs=120)
+
+    def put_start(self, global_step):
+        self._writer.add_session_log(SessionLog(status=SessionLog.START), global_step)
+
+    def put_scalar(self, k, v, global_step):
+        self._writer.add_summary(Summary(value=[Summary.Value(tag=k, simple_value=float(v))]), global_step)
