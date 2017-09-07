@@ -6,7 +6,7 @@ from preprocess import bdwm_qagen
 
 if __name__ == '__main__':
     # Data path
-    data_dir = r'/Users/jensen/Workspace/Machine-Learning/Data/BDWM/data'
+    data_dir = r'../data'
     ori_pkl = os.path.join(data_dir, 'all.split_pair.pkl')
     rst_pkl = os.path.join(data_dir, 'q25a25.split_pair.pkl')
 
