@@ -1,25 +1,28 @@
 import argparse
+import sys
 import time
 
 import tensorflow as tf
+import tqdm
 from config import Config
 from dataset import DataProvider
 from model import Seq2SeqBasicModel
-from utils import TrainHelper
+from utils import TrainHelper, stdout_redirect_to_tqdm
 
 
 def main():
     # Argument Parsing
     parser = argparse.ArgumentParser()
+    parser.add_argument(dest='exp_name', type=str, help='Name of the current experiment.')
     parser.add_argument('-c', '--continue', dest='continue_path', type=str, help='Continue a given checkpoint.')
     args = parser.parse_args()
 
-    config = Config()
+    config = Config(args.exp_name)
     provider = DataProvider(config)
     model = Seq2SeqBasicModel(config, 'train')
 
     with tf.Session() as sess:
-        helper = TrainHelper(sess)
+        helper = TrainHelper(sess, config)
         clock = helper.clock
         sess.run(tf.global_variables_initializer())
 
@@ -48,12 +51,12 @@ def main():
             pass
 
             # Main loop
-            for minibatch in dataset.get_dataset_iter():
-                print('Step {} of {}'.format(clock.global_step, config.epoch_steps))
-                feed_dict = model.build_feed_dict(**minibatch)
-                fetch_dict = model.build_fetch_dict(['loss', 'updates'])
-                outputs = sess.run(fetch_dict, feed_dict=feed_dict)
-                print('loss: {}'.format(outputs['loss']))
+            for minibatch in tqdm.tqdm(dataset.get_dataset_iter(), total=config.epoch_steps, file=sys.stdout):
+                with stdout_redirect_to_tqdm():
+                    feed_dict = model.build_feed_dict(**minibatch)
+                    fetch_dict = model.build_fetch_dict(['loss', 'updates'])
+                    outputs = sess.run(fetch_dict, feed_dict=feed_dict)
+                    print('loss: {}'.format(outputs['loss']))
 
                 clock.tick()
 

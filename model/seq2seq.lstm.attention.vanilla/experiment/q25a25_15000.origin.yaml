@@ -1,0 +1,5 @@
+encoder_symbols_num: 15000
+decoder_symbols_num: 15000
+max_decode_step: 30
+traindata_path: "../../data/q25a25_15000.token.pkl"
+dict_path: "../../data/q25a25_15000.dict"
