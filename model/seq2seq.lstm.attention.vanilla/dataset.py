@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from utils import EpochDataset, GeneratorDataset, MinibatchDataset
+from madelight.dataset import EpochDataset, GeneratorDataset, MinibatchDataset
 
 _PAD = 0
 

@@ -6,8 +6,9 @@ import tensorflow as tf
 import tqdm
 from config import Config
 from dataset import DataProvider
+from madelight.train import TrainHelper
+from madelight.utils.itqdm import stdout_redirect_to_tqdm
 from model import Seq2SeqBasicModel
-from utils import TrainHelper, stdout_redirect_to_tqdm
 
 
 def main():

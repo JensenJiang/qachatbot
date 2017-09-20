@@ -1,12 +1,13 @@
 import os
 
 import yaml
-from utils import ModelLocator
+from madelight.utils import ModelLocator
 
 
 class Config:
     def __init__(self, exp_name):
         # Basic parameters
+
         self.exp_name = exp_name
         self.learning_rate = 0.1
         self.minibatch_size = 32

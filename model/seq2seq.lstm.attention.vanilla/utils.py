@@ -8,7 +8,6 @@ import numpy as np
 
 import tensorflow as tf
 import tqdm
-import yaml
 from tensorflow.python.summary.summary import SessionLog, Summary
 from tensorflow.python.summary.writer.writer import FileWriter
 

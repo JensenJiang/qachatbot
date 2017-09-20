@@ -4,8 +4,8 @@ import numpy as np
 
 import tensorflow as tf
 from config import Config
+from madelight.evaluate import EvalHelper
 from model import Seq2SeqBasicModel
-from utils import EvalHelper
 
 
 def main():
