@@ -14,6 +14,7 @@ class Config:
         self.gen_learning_rate = 0.01
         self.clip_min = -0.1
         self.clip_max = 0.1
+        self.critic = 50
 
         # Dataset Location
         self.traindata_path = r'./data/bdwm_data_token.pkl'

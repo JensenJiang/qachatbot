@@ -328,10 +328,14 @@ class GANBasicModel(Seq2SeqBasicModel):
         self.true_score = self.seq2logit(self.true_ans,self.config.keep_prob,max_time_step=self.config.max_decode_step)
         self.fake_score = self.seq2logit(self.true_ans, self.config.keep_prob, max_time_step=self.config.max_decode_step,reuse=True)
 
+        # clip discrim weights
+        self.d_clip = [tf.assign(v, tf.clip_by_value(v, self.config.clip_min, self.config.clip_max)) for v in self.d_params]
+
+    def build_optimizer(self):
         self.d_loss_real = tf.reduce_mean(self.true_score)
         self.d_loss_fake = tf.reduce_mean(self.fake_score)
         self.d_loss = self.d_loss_fake - self.d_loss_real
-        self.g_loss =  tf.reduce_mean(-self.fake_score)
+        self.g_loss = tf.reduce_mean(-self.fake_score)
 
         self.optimizer_dis = tf.train.RMSPropOptimizer(self.config.dis_learning_rate, name='RMSProp_dis')
         self.optimizer_gen = tf.train.RMSPropOptimizer(self.config.gen_learning_rate, name='RMSProp_gen')
@@ -342,5 +346,8 @@ class GANBasicModel(Seq2SeqBasicModel):
         self.d_trainer = self.optimizer_dis.minimize(self.d_loss, var_list=self.d_params)
         self.g_trainer = self.optimizer_gen.minimize(self.g_loss, var_list=self.g_params)
 
-        # clip discrim weights
-        self.d_clip = [tf.assign(v, tf.clip_by_value(v, self.config.clip_min, self.config.clip_max)) for v in self.d_params]
+        self.dis_gradients = tf.gradients(self.d_loss, self.d_params)
+        self.gen_gradients = tf.gradients(self.g_loss, self.g_params)
+
+        self.dis_updates = self.optimizer_dis.apply_gradients(zip(self.dis_gradients, self.d_params))
+        self.gen_updates = self.optimizer_gen.apply_gradients(zip(self.gen_gradients, self.g_params))
