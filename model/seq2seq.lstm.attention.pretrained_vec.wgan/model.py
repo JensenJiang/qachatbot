@@ -172,7 +172,7 @@ class Seq2SeqBasicModel:
                 tf.summary.scalar('loss', self.loss)
 
                 # Contruct graphs for minimizing loss
-                self.build_optimizer()
+                # self.build_optimizer()
 
             elif phase == 'decode':
 
@@ -289,14 +289,14 @@ class GANBasicModel(Seq2SeqBasicModel):
     def __init__(self, config, vecs, phase):
         self.config = config
         with tf.variable_scope('generator') as scope:
-            Seq2SeqBasicModel.__init__(self, config, vecs, phase='decode')
+            Seq2SeqBasicModel.__init__(self, config, vecs, phase='train')
         self.discriminator()
 
-    def seq2logit(self,seq_raw, keep_prob, max_time_step, reuse=False):
+    def seq2logit(self, seq_raw, keep_prob, max_time_step, reuse=False):
         with tf.variable_scope('discriminator') as scope:
             if reuse:
                 scope.reuse_variables()
-            emb_matrix = self.encoder_embeddings
+            emb_matrix = self.embedding
             emb_ans = tf.reduce_mean(tf.multiply(
                 tf.reshape(seq_raw, [max_time_step, self.config.minibatch_size, self.config.decoder_symbols_num, 1]), emb_matrix), axis=2)
 
@@ -315,7 +315,7 @@ class GANBasicModel(Seq2SeqBasicModel):
             return h3
 
     def discriminator(self):
-        self.true_ans = self.decoder_inputs_train
+        self.true_ans = self.decoder_inputs
         self.fake_ans = self.encoder_outputs
         self.true_score = self.seq2logit(self.true_ans,self.config.keep_prob,max_time_step=self.config.max_decode_step)
         self.fake_score = self.seq2logit(self.true_ans, self.config.keep_prob, max_time_step=self.config.max_decode_step,reuse=True)
