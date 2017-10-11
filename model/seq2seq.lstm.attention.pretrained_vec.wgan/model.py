@@ -224,7 +224,8 @@ class Seq2SeqBasicModel:
 
                 # Here, we use expand_dims to be compatible with the result of the beamsearch decoder
                 # decoder_pred_decode: [batch_size, max_time_step, 1] (output_major=False)
-                self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+                # self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+                self.decoder_pred_decode = self.decoder_outputs_decode.sample_id
 
     def build_encoder_cell(self):
         # Currently, dropout and residual component is ignored
@@ -289,9 +290,10 @@ class GANBasicModel(Seq2SeqBasicModel):
     def __init__(self, config, vecs, phase):
         self.config = config
         with tf.variable_scope('generator') as scope:
-            Seq2SeqBasicModel.__init__(self, config, vecs, phase='train')
-        self.discriminator()
-        self.build_optimizer()
+            Seq2SeqBasicModel.__init__(self, config, vecs, phase=phase)
+        if phase == 'train':
+            self.discriminator()
+            self.build_optimizer()
 
     def seq2logit(self, seq_raw, keep_prob, max_time_step, reuse=False):
         with tf.variable_scope('discriminator') as scope:
