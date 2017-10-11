@@ -291,19 +291,22 @@ class GANBasicModel(Seq2SeqBasicModel):
         with tf.variable_scope('generator') as scope:
             Seq2SeqBasicModel.__init__(self, config, vecs, phase='train')
         self.discriminator()
+        self.build_optimizer()
 
     def seq2logit(self, seq_raw, keep_prob, max_time_step, reuse=False):
         with tf.variable_scope('discriminator') as scope:
             if reuse:
                 scope.reuse_variables()
             emb_matrix = self.embedding
-            emb_ans = tf.reduce_mean(tf.multiply(
-                tf.reshape(seq_raw, [max_time_step, self.config.minibatch_size, self.config.decoder_symbols_num, 1]), emb_matrix), axis=2)
+            # emb_ans = tf.reduce_sum(tf.multiply(
+            #     tf.reshape(seq_raw, [self.batch_size, -1, self.config.decoder_symbols_num, 1]), emb_matrix), axis=2)
 
-            _, state = tf.nn.dynamic_rnn(self.cell, emb_ans, sequence_length=max_time_step, initial_state=None, dtype=tf.float32,
-                                         time_major=False)
+            emb_ans = tf.einsum('ijk,kx->ijx', seq_raw, emb_matrix)
+
+            r_cell = MultiRNNCell([LSTMCell(self.config.embedding_size)])
+            _, state = tf.nn.dynamic_rnn(r_cell, emb_ans, sequence_length=max_time_step, initial_state=None, dtype=tf.float32, time_major=False)
             tmp_state = tf.convert_to_tensor(state[-1])  # 2*batch_size*emb_size
-            h_state = tf.slice(tmp_state, [1, 0, 0], [1, self.config.minibatch_size, self.config.embedding_size])
+            h_state = tf.slice(tmp_state, [1, 0, 0], [1, self.batch_size, self.config.embedding_size])
             state = tf.reshape(h_state, [self.config.minibatch_size, -1])
             h1_size = 32
             w1 = tf.get_variable("w1", [self.config.embedding_size, h1_size], initializer=tf.truncated_normal_initializer(stddev=0.1))
@@ -315,13 +318,10 @@ class GANBasicModel(Seq2SeqBasicModel):
             return h3
 
     def discriminator(self):
-        self.true_ans = self.decoder_inputs
-        self.fake_ans = self.encoder_outputs
-        self.true_score = self.seq2logit(self.true_ans,self.config.keep_prob,max_time_step=self.config.max_decode_step)
-        self.fake_score = self.seq2logit(self.true_ans, self.config.keep_prob, max_time_step=self.config.max_decode_step,reuse=True)
-
-        # clip discrim weights
-        self.d_clip = [tf.assign(v, tf.clip_by_value(v, self.config.clip_min, self.config.clip_max)) for v in self.d_params]
+        self.true_ans = tf.one_hot(self.decoder_inputs, depth=self.config.decoder_symbols_num, on_value=1.0, off_value=0.0, axis=-1)
+        self.fake_ans = self.decoder_logits_train
+        self.true_score = self.seq2logit(self.true_ans, self.config.keep_prob, max_time_step=self.decoder_inputs_length)
+        self.fake_score = self.seq2logit(self.fake_ans, self.config.keep_prob, max_time_step=None, reuse=True)
 
     def build_optimizer(self):
         self.d_loss_real = tf.reduce_mean(self.true_score)
@@ -334,6 +334,9 @@ class GANBasicModel(Seq2SeqBasicModel):
 
         self.d_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="discriminator")
         self.g_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="generator")
+
+        # clip discrim weights
+        self.d_clip = [tf.assign(v, tf.clip_by_value(v, self.config.clip_min, self.config.clip_max)) for v in self.d_params]
 
         self.d_trainer = self.optimizer_dis.minimize(self.d_loss, var_list=self.d_params)
         self.g_trainer = self.optimizer_gen.minimize(self.g_loss, var_list=self.g_params)

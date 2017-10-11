@@ -4,6 +4,7 @@ import time
 
 import tensorflow as tf
 import tqdm
+
 from config import Config
 from dataset import DataProvider
 from madelight.train import TrainHelper
@@ -25,7 +26,9 @@ def main():
         wd = WordVecDict.from_vec_file(dict_in, exclude=['</s>'])
     model = GANBasicModel(config, wd.get_vecs_mat(), 'train')
 
-    with tf.Session() as sess:
+    sess_config = tf.ConfigProto()
+    sess_config.gpu_options.allow_growth = True
+    with tf.Session(config=sess_config) as sess:
         helper = TrainHelper(sess, config)
         sess.run(tf.global_variables_initializer())
 
@@ -77,9 +80,10 @@ def main():
                     else:
                         fetch_dict = model.build_fetch_dict(['d_loss', 'g_loss', 'gen_updates'])
                     outputs = sess.run(fetch_dict, feed_dict=feed_dict)
-                    print('loss: {}'.format(outputs['loss']))
+                    print('d_loss: {}, g_loss: {}'.format(outputs['d_loss'], outputs['g_loss']))
 
-                train_tb.put_scalar('seq_loss', outputs['loss'], clock.global_step)
+                train_tb.put_scalar('g_loss', outputs['g_loss'], clock.global_step)
+                train_tb.put_scalar('d_loss', outputs['d_loss'], clock.global_step)
                 clock.tick()
 
                 if clock.global_step % 200 == 0:
