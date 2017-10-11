@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
 
     config = Config(args.exp_name)
-    provider = DataProvider(config)
+    provider = DataProvider(config, 'train')
     with open(config.dict_path) as dict_in:
         wd = WordVecDict.from_vec_file(dict_in, exclude=['</s>'])
     model = Seq2SeqBasicModel(config, wd.get_vecs_mat(), 'train')

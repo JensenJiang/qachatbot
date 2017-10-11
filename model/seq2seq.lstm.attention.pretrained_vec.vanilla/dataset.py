@@ -64,13 +64,21 @@ class SeqPadMinibatchDataset(MinibatchDataset):
 
 
 class DataProvider:
-    def __init__(self, config):
-        with open(config.traindata_path, 'rb') as fin:
+    def __init__(self, config, phase):
+        data_path = config.traindata_path if phase == 'train' else config.valdata_path
+        with open(data_path, 'rb') as fin:
             self.data = pickle.load(fin)
 
         self.config = config
-        self.epoch_instances = len(self.data) // self.config.minibatch_size * self.config.minibatch_size
-        self.config.epoch_instances = self.epoch_instances
+        self.phase = phase
+
+        if phase == 'train':
+            self.epoch_instances = len(self.data) // self.config.minibatch_size * self.config.minibatch_size
+            self.config.epoch_instances = self.epoch_instances
+            self.minibatch_size = self.config.minibatch_size
+        elif phase == 'test':
+            self.epoch_instances = 100
+            self.minibatch_size = 1
 
     def _gen(self):
         np.random.shuffle(self.data)
@@ -86,5 +94,5 @@ class DataProvider:
     def get(self):
         dataset = GeneratorDataset(self._gen)
         dataset = EpochDataset(dataset, self.epoch_instances)
-        dataset = SeqPadMinibatchDataset(dataset, self.config.minibatch_size)
+        dataset = SeqPadMinibatchDataset(dataset, self.minibatch_size)
         return dataset

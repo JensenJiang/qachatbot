@@ -224,7 +224,8 @@ class Seq2SeqBasicModel:
 
                 # Here, we use expand_dims to be compatible with the result of the beamsearch decoder
                 # decoder_pred_decode: [batch_size, max_time_step, 1] (output_major=False)
-                self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+                # self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+                self.decoder_pred_decode = self.decoder_outputs_decode.sample_id
 
     def build_encoder_cell(self):
         # Currently, dropout and residual component is ignored

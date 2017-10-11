@@ -15,6 +15,7 @@ class Config:
 
         # Dataset Location
         self.traindata_path = r'./data/Short-Text-Conversation/q25a25_train.pkl'
+        self.valdata_path = r'./data/Short-Text-Conversation/q25a25_valid.pkl'
         self.dict_path = r'./data/Short-Text-Conversation/model_256.vec'
 
         # RNN related parameters
